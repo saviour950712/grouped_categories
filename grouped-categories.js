@@ -39,6 +39,9 @@
 		protoTickDestroy = tickProto.destroy,
 		protoTickRender = tickProto.render;
 
+		//fixnew
+		var num =1;
+
 	function deepClone(thing) {
 		return JSON.parse(JSON.stringify(thing));
 	}
@@ -95,7 +98,7 @@
 
 		while (len--) {
 			cat = cats[len];
-			
+
 			if (cat.categories) {
 				if (parent) {
 					cat.parent = parent;
@@ -242,30 +245,31 @@
 		// render grid path for the first time
 		if (!grid) {
 			grid = axis.labelsGrid = axis.chart.renderer.path()
-			.attr({
-				// #58: use tickWidth/tickColor instead of lineWidth/lineColor:
-				strokeWidth: tickWidth, // < 4.0.3
-				'stroke-width': tickWidth, // 4.0.3+ #30
-				stroke: options.tickColor || '' // for styled mode (tickColor === undefined)
-			})
-			.add(axis.axisGroup);
+				.attr({
+					// #58: use tickWidth/tickColor instead of lineWidth/lineColor:
+					strokeWidth: tickWidth, // < 4.0.3
+					'stroke-width': tickWidth, // 4.0.3+ #30
+					stroke: options.tickColor || '' // for styled mode (tickColor === undefined)
+				})
+				.add(axis.axisGroup);
 			// for styled mode - add class
 			if (!options.tickColor) {
 				grid.addClass('highcharts-tick');
 			}
 		}
 
-		// go through every level and draw horizontal grid line
-		while (i <= depth) {
-			offset += axis.groupSize(i);
+		// fixnew
+		// // go through every level and draw horizontal grid line
+		// while (i <= depth) {
+		// 	offset += axis.groupSize(i);
 
-			part = horiz ?
-				[left, offset, right, offset] :
-				[offset, top, offset, bottom];
+		// 	part = horiz ?
+		// 		[left, offset, right, offset] :
+		// 		[offset, top, offset, bottom];
 
-			addGridPart(d, part, tickWidth);
-			i++;
-		}
+		// 	addGridPart(d, part, tickWidth);
+		// 	i++;
+		// }
 
 		// draw grid path
 		grid.attr({
@@ -320,17 +324,17 @@
 		}
 		walk(this.categoriesTree, 'categories', function (group) {
 			var tick = group.tick;
-			
+
 			if (!tick) {
 				return false;
 			}
 			tick.label.destroy();
-			
+
 			each(tick, function (v, i) {
 				delete tick[i];
 			});
 			delete group.tick;
-			
+
 			return true;
 		});
 		this.labelsGrid = null;
@@ -373,13 +377,13 @@
 		var tick = this,
 			axis = tick.axis,
 			category;
-		
+
 		protoTickAddLabel.call(tick);
-		
+
 		if (!axis.categories || !(category = axis.categories[tick.pos])) {
 			return false;
 		}
-		
+
 		// set label text - but applied after formatter #46
 		if (tick.label) {
 			tick.label.attr('text', tick.axis.labelFormatter.call({
@@ -391,7 +395,7 @@
 				pos: tick.pos
 			}));
 		}
-		
+
 		// create elements for parent categories
 		if (axis.isGrouped && axis.options.labels.enabled) {
 			tick.addGroupedLabels(category);
@@ -468,7 +472,8 @@
 			depth++;
 		}
 	};
-
+	
+	
 	// set labels position & render categories grid
 	tickProto.render = function (index, old, opacity) {
 		protoTickRender.call(this, index, old, opacity);
@@ -501,21 +506,44 @@
 			maxPos,
 			attrs,
 			bBox;
+		// fixnew
+		var arr = [];
 
+		var findLast = function(categories){
+			var temp = 0;
+			categories.forEach(item=>{
+				temp+=item.categories.length;
+				arr.push(temp);
+			});
+			arr.pop();
+		}
+
+		findLast(axis.options.categories)
 		// render grid for "normal" categories (first-level), render left grid line only for the first category
-		if (isFirst) {
-			gridAttrs = horiz ?
-				[axis.left, xy.y, axis.left, xy.y + axis.groupSize(true)] : axis.isXAxis ?
-					[xy.x, axis.top, xy.x + axis.groupSize(true), axis.top] : [xy.x, axis.top + axis.len, xy.x + axis.groupSize(true), axis.top + axis.len];
+		// if (isFirst) {
+		// 	gridAttrs = horiz ?
+		// 		[axis.left, xy.y, axis.left, xy.y + axis.groupSize(true)] : axis.isXAxis ?
+		// 			[xy.x, axis.top, xy.x + axis.groupSize(true), axis.top] : [xy.x, axis.top + axis.len, xy.x + axis.groupSize(true), axis.top + axis.len];
 
-			addGridPart(grid, gridAttrs, tickWidth);
-		}
+		// 	addGridPart(grid, gridAttrs, tickWidth);
+		// }
 
+		// var groupNum = axis.options.categories[ num /groupNum ].categories.length;
+
+		// fixnew
 		if (horiz && axis.left < xy.x) {
-			addGridPart(grid, [xy.x - reverseCrisp, xy.y, xy.x - reverseCrisp, xy.y + size], tickWidth);
-		} else if (!horiz && axis.top <= xy.y) {
-			addGridPart(grid, [xy.x, xy.y + reverseCrisp, xy.x + size, xy.y + reverseCrisp], tickWidth);
+			if(axis.labelsDepth === 1){
+				if(arr.includes(num)){
+					addGridPart(grid, [xy.x - reverseCrisp, xy.y, xy.x - reverseCrisp, xy.y + size], tickWidth);
+				}
+				num ++;
+			}
 		}
+
+
+		// else if (!horiz && axis.top <= xy.y) {
+		// 	addGridPart(grid, [xy.x, xy.y + reverseCrisp, xy.x + size, xy.y + reverseCrisp], tickWidth);
+		// }
 
 		size = start + size;
 
@@ -532,36 +560,36 @@
 
 		while (group.parent) {
 			group = group.parent;
-			
+
 			var fix = fixOffset(treeCat),
 				userX = group.labelOffsets.x,
 				userY = group.labelOffsets.y;
-			
+
 			minPos = tickPosition(tick, mathMax(group.startAt - 1, min - 1));
 			maxPos = tickPosition(tick, mathMin(group.startAt + group.leaves - 1 - fix, max));
 			bBox = group.label.getBBox(true);
 			lvlSize = axis.groupSize(depth);
 			// check if on the edge to adjust
 			reverseCrisp = ((horiz && maxPos.x === axis.pos + axis.len) || (!horiz && maxPos.y === axis.pos)) ? -1 : 0;
-			
+
 			attrs = horiz ? {
 				x: (minPos.x + maxPos.x) / 2 + userX,
 				y: size + axis.groupFontHeights[depth] + lvlSize / 2 + userY / 2
 			} : {
-				x: size + lvlSize / 2 + userX,
-				y: (minPos.y + maxPos.y - bBox.height) / 2 + baseLine + userY
-			};
-			
+					x: size + lvlSize / 2 + userX,
+					y: (minPos.y + maxPos.y - bBox.height) / 2 + baseLine + userY
+				};
+
 			if (!isNaN(attrs.x) && !isNaN(attrs.y)) {
 				group.label.attr(attrs);
 
-				if (grid) {
-					if (horiz && axis.left < maxPos.x) {
-						addGridPart(grid, [maxPos.x - reverseCrisp, size, maxPos.x - reverseCrisp, size + lvlSize], tickWidth);
-					} else if (!horiz && axis.top <= maxPos.y) {
-						addGridPart(grid, [size, maxPos.y + reverseCrisp, size + lvlSize, maxPos.y + reverseCrisp], tickWidth);
-					}
-				}
+				// if (grid) {
+				// 	if (horiz && axis.left < maxPos.x) {
+				// 		addGridPart(grid, [maxPos.x - reverseCrisp, size, maxPos.x - reverseCrisp, size + lvlSize], tickWidth);
+				// 	} else if (!horiz && axis.top <= maxPos.y) {
+				// 		addGridPart(grid, [size, maxPos.y + reverseCrisp, size + lvlSize, maxPos.y + reverseCrisp], tickWidth);
+				// 	}
+				// }
 			}
 
 			size += lvlSize;
