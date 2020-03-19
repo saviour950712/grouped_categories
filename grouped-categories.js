@@ -190,6 +190,10 @@
 		for (var i = 0; i <= stats.depth; i++) {
 			var hasOptions = userAttr && userAttr[i - 1],
 				mergedCSS = hasOptions && userAttr[i - 1].style ? merge(css, userAttr[i - 1].style) : css;
+				//fix
+				if(mergedCSS){
+					mergedCSS.fontSize = '10px';
+				}
 			this.groupFontHeights[i] = Math.round(this.chart.renderer.fontMetrics(mergedCSS ? mergedCSS.fontSize : 0).b * 0.3);
 		}
 	};
@@ -456,7 +460,8 @@
 			}
 
 			// set level size, #93
-			if (tick) {
+			// fix
+			if (tick && tick.label) {
 				axis.groupSize(depth, tick.label.getBBox()[size]);
 			}
 
