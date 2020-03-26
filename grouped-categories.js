@@ -200,6 +200,7 @@
 
 
 	axisProto.render = function () {
+		num = 1;
 		// clear grid path
 		if (this.isGrouped) {
 			this.labelsGridPath = [];
